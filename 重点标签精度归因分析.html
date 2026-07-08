@@ -21,6 +21,11 @@
   .section h2 { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #eee; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .data-table th { background: #f8f9fa; padding: 8px 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+  .data-table th.sortable { cursor: pointer; user-select: none; }
+  .data-table th.sortable:hover { background: #e0e4f0; }
+  .data-table th.sortable.asc { color: #2980b9; }
+  .data-table th.sortable.desc { color: #2980b9; }
+  .sort-arrow { font-size: 11px; margin-left: 3px; }
   .data-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
   .data-table tr:hover { background: #f8f9ff; }
   .tag-red { color: #e74c3c; font-weight: 600; } .tag-orange { color: #e67e22; font-weight: 600; }
@@ -103,7 +108,7 @@
     <table class="data-table" id="mainTable">
       <thead><tr>
         <th>模态</th><th>标签ID</th><th>标签名</th><th>样本数</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th>
-        <th>Precision</th><th>Recall</th><th>F1</th><th>精度达标</th><th>F1达标</th><th>置信度</th>
+        <th>Precision<span class="sort-arrow"></span></th><th>Recall<span class="sort-arrow"></span></th><th>F1<span class="sort-arrow"></span></th><th>精度达标</th><th>F1达标</th><th>置信度</th>
         <th>规则版本是否变更</th><th>入库版本号</th><th>当前版本号</th><th>归因判断</th>
       </tr></thead>
       <tbody id="mainBody"></tbody>
@@ -152,6 +157,15 @@ function renderTable() {
     return true;
   });
 
+  // Apply sort if active
+  if (sortState.column) {
+    filtered.sort((a, b) => {
+      const va = parseFloat(a[sortState.column]);
+      const vb = parseFloat(b[sortState.column]);
+      return sortState.dir === 'desc' ? vb - va : va - vb;
+    });
+  }
+
   document.getElementById('countInfo').textContent = `显示 ${filtered.length} / ${TABLE_DATA.length} 条`;
 
   const tbody = document.getElementById('mainBody');
@@ -171,6 +185,36 @@ function renderTable() {
   });
 }
 
+let sortState = { column: null, dir: 'desc' };
+
+function setupSort() {
+  const thead = document.querySelector('#mainTable thead tr');
+  const headers = thead.querySelectorAll('th');
+  headers.forEach((th, idx) => {
+    const colName = th.textContent.replace(/[▼▲\s]/g, '');
+    if (colName === 'Precision' || colName === 'Recall' || colName === 'F1') {
+      th.classList.add('sortable');
+      th.addEventListener('click', () => {
+        if (sortState.column === colName) {
+          sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
+        } else {
+          sortState.column = colName;
+          sortState.dir = 'desc';
+        }
+        // Update header arrows and classes
+        headers.forEach(h => {
+          h.classList.remove('asc', 'desc');
+          const arrow = h.querySelector('.sort-arrow');
+          if (arrow) arrow.textContent = '';
+        });
+        th.classList.add(sortState.dir);
+        th.querySelector('.sort-arrow').textContent = sortState.dir === 'desc' ? '▼' : '▲';
+        renderTable();
+      });
+    }
+  });
+}
+
 document.getElementById('filterModality').addEventListener('change', renderTable);
 document.getElementById('filterAttrib').addEventListener('change', renderTable);
 document.getElementById('filterP').addEventListener('change', renderTable);
@@ -179,6 +223,7 @@ document.getElementById('filterConf').addEventListener('change', renderTable);
 document.getElementById('filterVersion').addEventListener('change', renderTable);
 document.getElementById('filterLabel').addEventListener('input', renderTable);
 
+setupSort();
 renderSummary();
 renderTable();
 </script>
