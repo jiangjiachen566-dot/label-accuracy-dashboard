@@ -108,7 +108,7 @@
     <table class="data-table" id="mainTable">
       <thead><tr>
         <th>模态</th><th>标签ID</th><th>标签名</th><th>样本数</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th>
-        <th>Precision<span class="sort-arrow"></span></th><th>Recall<span class="sort-arrow"></span></th><th>F1<span class="sort-arrow"></span></th><th>精度达标</th><th>F1达标</th><th>置信度</th>
+        <th class="sortable">Precision<span class="sort-arrow"></span></th><th class="sortable">Recall<span class="sort-arrow"></span></th><th class="sortable">F1<span class="sort-arrow"></span></th><th>精度达标</th><th>F1达标</th><th>置信度</th>
         <th>规则版本是否变更</th><th>入库版本号</th><th>当前版本号</th><th>归因判断</th>
       </tr></thead>
       <tbody id="mainBody"></tbody>
@@ -224,6 +224,13 @@ document.getElementById('filterVersion').addEventListener('change', renderTable)
 document.getElementById('filterLabel').addEventListener('input', renderTable);
 
 setupSort();
+sortState = { column: 'F1', dir: 'desc' };
+document.querySelectorAll('#mainTable th.sortable').forEach(h => {
+  if (h.textContent.replace(/[▼▲\s]/g, '') === 'F1') {
+    h.querySelector('.sort-arrow').textContent = '▼';
+    h.classList.add('desc');
+  }
+});
 renderSummary();
 renderTable();
 </script>
